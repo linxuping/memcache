@@ -161,6 +161,39 @@ enum conn_states {
     conn_max_state   /**< Max state value (used for assertion) */
 };
 
+static inline 
+char* get_conn_states_desc(enum conn_states state)
+{
+    switch(state){
+        case conn_listening:
+            return "conn_listening";
+        case conn_new_cmd:
+            return "conn_new_cmd";
+        case conn_waiting:
+            return "conn_waiting";
+        case conn_read:
+            return "conn_read";
+        case conn_parse_cmd:
+            return "conn_parse_cmd";
+        case conn_write:
+            return "conn_write";
+        case conn_nread:
+            return "conn_nread";
+        case conn_swallow:
+            return "conn_swallow";
+        case conn_closing:
+            return "conn_closing";
+        case conn_mwrite:
+            return "conn_mwrite";
+        case conn_closed:
+            return "conn_closed";
+        case conn_max_state:
+            return "conn_max_state";
+        default:
+            return "????";
+    }
+}
+
 enum bin_substates {
     bin_no_state,
     bin_reading_set_header,
@@ -607,3 +640,12 @@ extern void drop_privileges(void);
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
+
+//lxp define
+static inline
+void lxp_print(const char *desc)
+{
+  if (settings.verbose > 2)
+    fprintf(stderr, "[lxp]%s\n", desc);
+}
+

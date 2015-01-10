@@ -3982,11 +3982,16 @@ static enum transmit_result transmit(conn *c) {
         }
         if (res == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             if (!update_event(c, EV_WRITE | EV_PERSIST)) {
+		if (settings.verbose > 2)
+                    fprintf(stderr, "set to EV_WRITE\n");
+                
                 if (settings.verbose > 0)
                     fprintf(stderr, "Couldn't update event\n");
                 conn_set_state(c, conn_closing);
                 return TRANSMIT_HARD_ERROR;
             }
+	    if (settings.verbose > 2)
+		fprintf(stderr, "[lxp]set to EV_WRITE\n");
             return TRANSMIT_SOFT_ERROR;
         }
         /* if res == 0 or res == -1 and error is not EAGAIN or EWOULDBLOCK,
@@ -4141,6 +4146,8 @@ static void drive_machine(conn *c) {
                         conn_set_state(c, conn_closing);
                         break;
                     }
+		    if (settings.verbose > 2)
+			fprintf(stderr, "[lxp]set to EV_WRITE\n");
                 }
                 stop = true;
             }
@@ -4354,6 +4361,7 @@ void event_handler(const int fd, const short which, void *arg) {
         conn_close(c);
         return;
     }
+    fprintf(stderr, "[lxp]invoke event_handler conn:%p state:%s ... ... \n", (void*)c, get_conn_states_desc(c->state));
 
     drive_machine(c);
 
