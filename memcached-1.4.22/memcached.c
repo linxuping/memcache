@@ -5533,6 +5533,7 @@ int main (int argc, char **argv) {
 
     /* initialize main thread libevent instance */
     main_base = event_init();
+    lxp_print("event_init");
 
     /* initialize other stuff */
     stats_init();
