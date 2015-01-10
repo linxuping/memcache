@@ -23,15 +23,37 @@ typedef struct{
 }LIBEVENT_THREAD;
 static LIBEVENT_THREAD *threads;
 static int nthreads = 4;
+
+
+void accept_event_handler(const int fd, const short which, void *arg) {
+    printf("accept event handler ... ...\n");
+}
   
+int accept_fd;
+struct event accept_ev;  
+struct event_base* accept_main_base;  
 void conn_new(const int sfd, const short event, void *arg)  
 {  
     //cout<<"accept handle"<<endl;  
     struct sockaddr_in addr;  
     socklen_t addrlen = sizeof(addr);  
-    int fd = accept(sfd, (struct sockaddr *) &addr, &addrlen); //处理连接  
+    accept_fd = accept(sfd, (struct sockaddr *) &addr, &addrlen); //处理连接  
+
+    //try to using 
+    //struct event accept_ev;  
+    //struct event_base* accept_main_base = event_init();  
+    /*
+    accept_main_base = event_init();  
+    event_set(&accept_ev, accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accept_event_handler, NULL); 
+    event_base_set(accept_main_base, &accept_ev);
+    event_add(&accept_ev, NULL);  
+    event_base_loop(accept_main_base, 0);  
+    */
+    //try END.
+
+
     struct bufferevent* buf_ev;  
-    buf_ev = bufferevent_new(fd, NULL, NULL, NULL, NULL);  
+    buf_ev = bufferevent_new(accept_fd, NULL, NULL, NULL, NULL);  
     buf_ev->wm_read.high = 4096;  
     //cout<<"event write"<<endl;  
     bufferevent_write(buf_ev, MESSAGE, strlen(MESSAGE));  

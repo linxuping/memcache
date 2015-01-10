@@ -349,8 +349,10 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     assert(sfd >= 0 && sfd < max_fds);
     c = conns[sfd];
+    fprintf(stderr, "[lxp]try to use conn. fd:%d \n",sfd);
 
     if (NULL == c) {
+        fprintf(stderr, "[lxp]just new conn. \n");
         if (!(c = (conn *)calloc(1, sizeof(conn)))) {
             STATS_LOCK();
             stats.malloc_fails++;
