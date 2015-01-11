@@ -375,6 +375,7 @@ static void *worker_libevent(void *arg) {
 
     register_thread_initialized();
 
+    fprintf(stderr, "[lxp]invoke event_base_loop me->base >>> \n");
     event_base_loop(me->base, 0);
     return NULL;
 }

@@ -5645,11 +5645,11 @@ int main (int argc, char **argv) {
     /* Drop privileges no longer needed */
     drop_privileges();
 
+    fprintf(stderr, "[lxp]invoke event_base_loop main_base >>> \n");
     /* enter the event loop */
     if (event_base_loop(main_base, 0) != 0) {
         retval = EXIT_FAILURE;
     }
-
     stop_assoc_maintenance_thread();
 
     /* remove the PID file if we're a daemon */
