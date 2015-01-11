@@ -4364,7 +4364,7 @@ void event_handler(const int fd, const short which, void *arg) {
         conn_close(c);
         return;
     }
-    fprintf(stderr, "[lxp]invoke event_handler conn:%p state:%s ... ... \n", (void*)c, get_conn_states_desc(c->state));
+    fprintf(stderr, "[lxp]event_handler::drive_machine conn:%p state:%s ... ... \n", (void*)c, get_conn_states_desc(c->state));
 
     drive_machine(c);
 

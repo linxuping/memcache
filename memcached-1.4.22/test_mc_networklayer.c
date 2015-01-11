@@ -27,14 +27,17 @@ static int nthreads = 4;
 
 void accept_event_handler(const int fd, const short which, void *arg) {
     //? how to deal with read data ?
-    printf("accept event handler ... ...\n");
+    if(EV_READ == which){
+        printf("accept event handler ... ... fd:%d which:%d \n", fd, which);  
+    }
 }
   
 int accept_fd;
 struct event accept_ev;  
-struct event_base* accept_main_base;  
+struct event_base* accept_main_base = event_init();  
 void conn_new(const int sfd, const short event, void *arg)  
 {  
+    fprintf(stderr, "conn new\n");
     //cout<<"accept handle"<<endl;  
     struct sockaddr_in addr;  
     socklen_t addrlen = sizeof(addr);  
@@ -43,13 +46,16 @@ void conn_new(const int sfd, const short event, void *arg)
     //try to using 
     //struct event accept_ev;  
     //struct event_base* accept_main_base = event_init();  
-    /*
-    accept_main_base = event_init();  
+    //accept_main_base = event_init();  
     event_set(&accept_ev, accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accept_event_handler, NULL); 
-    event_base_set(accept_main_base, &accept_ev);
-    event_add(&accept_ev, NULL);  
-    event_base_loop(accept_main_base, 0);  
-    */
+    //event_base_set(accept_main_base, &accept_ev);
+    event_base_set(main_base, &accept_ev);
+    if (event_add(&accept_ev, 0) == -1){
+        fprintf(stderr, "[lxp error]event_add failed. \n");
+        fflush(stderr);
+        abort();
+    }
+    //event_base_loop(accept_main_base, 0);  
     //try END.
 
 
