@@ -26,6 +26,7 @@ static int nthreads = 4;
 
 
 void accept_event_handler(const int fd, const short which, void *arg) {
+    //? how to deal with read data ?
     printf("accept event handler ... ...\n");
 }
   

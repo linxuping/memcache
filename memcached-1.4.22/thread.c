@@ -394,7 +394,7 @@ static void thread_libevent_process(int fd, short which, void *arg) {
         if (settings.verbose > 0)
             fprintf(stderr, "Can't read from libevent pipe\n");
 
-    fprintf(stderr, "[lxp]into thread_libevent_process.\n");
+    fprintf(stderr, "[lxp]into thread_libevent_process. fd:%d \n",fd);
     switch (buf[0]) {
     case 'c':
     item = cq_pop(me->new_conn_queue);
@@ -835,8 +835,8 @@ void memcached_thread_init(int nthreads, struct event_base *main_base) {
         threads[i].notify_send_fd = fds[1];
 
         setup_thread(&threads[i]);
-	if (settings.verbose > 2)
-	  fprintf(stderr, "[lxp]nthreads: %d\n", i);
+	//if (settings.verbose > 2)
+	fprintf(stderr, "[lxp]nthreads: %d (receive_fd:%d send_id:%d) \n", i, fds[0], fds[1]);
         /* Reserve three fds for the libevent base, and two for the pipe */
         stats.reserved_fds += 5;
     }

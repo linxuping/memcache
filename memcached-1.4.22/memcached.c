@@ -349,7 +349,7 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     assert(sfd >= 0 && sfd < max_fds);
     c = conns[sfd];
-    fprintf(stderr, "[lxp]try to use conn. fd:%d \n",sfd);
+    fprintf(stderr, "[lxp]try to use conn. fd:%d init_state:%s \n",sfd,get_conn_states_desc(init_state));
 
     if (NULL == c) {
         fprintf(stderr, "[lxp]just new conn. \n");
@@ -4099,6 +4099,7 @@ static void drive_machine(conn *c) {
 
         case conn_read:
             res = IS_UDP(c->transport) ? try_read_udp(c) : try_read_network(c);
+            fprintf(stderr, "[lxp]conn_read, is udp? %d \n", IS_UDP(c->transport));
 
             switch (res) {
             case READ_NO_DATA_RECEIVED:
@@ -4475,6 +4476,7 @@ static int server_socket(const char *interface,
             }
             continue;
         }
+        fprintf(stderr, "[lxp]new fd:%d\n", sfd);
 
 #ifdef IPV6_V6ONLY
         if (next->ai_family == AF_INET6) {
@@ -4648,6 +4650,7 @@ static int server_socket_unix(const char *path, int access_mask) {
     if ((sfd = new_socket_unix()) == -1) {
         return 1;
     }
+    fprintf(stderr, "[lxp]new fd:%d - unixsocket\n", sfd);
 
     /*
      * Clean up a previous socket file if we left it around

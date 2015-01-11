@@ -23,9 +23,9 @@
 
 /* powers-of-N allocation structures */
 
-typedef struct {
-    unsigned int size;      /* sizes of items */
-    unsigned int perslab;   /* how many items per slab */
+typedef struct { //lxp: slabs * perslab * size
+    unsigned int size;      /* sizes of items (lxp: each item size)*/
+    unsigned int perslab;   /* how many items per slab (lxp: items count)*/
 
     void *slots;           /* list of item ptrs */
     unsigned int sl_curr;   /* total free items in list */
