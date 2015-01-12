@@ -5,3 +5,9 @@ echo "get mykey" | nc localhost 11211 &
 echo "get mykey" | nc localhost 11211 &
 echo "get mykey" | nc localhost 11211 &
 echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &
+echo "get mykey" | nc localhost 11211 &

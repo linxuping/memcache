@@ -466,12 +466,28 @@ conn *conn_new(const int sfd, enum conn_states init_state,
 
     event_set(&c->event, sfd, event_flags, event_handler, (void *)c);
     event_base_set(base, &c->event);
+    fprintf(stderr, "[lxp]event_base_set [thread:%p] event:%p --> base:%p\n",(void*)&(c->thread->thread_id), (void*)&c->event, (void*)&base);
     c->ev_flags = event_flags;
 
     if (event_add(&c->event, 0) == -1) {
         perror("event_add");
         return NULL;
     }
+/* -t 2 ???
+[lxp]event_base_set [thread:(nil)] event:0xb59239c0 --> base:0xb74f3294
+[lxp]event_base_set [thread:(nil)] event:0xb5b239c0 --> base:0xb6cf2294
+[lxp]event_base_set [thread:0x8cc9660] event:0xb5b239c0 --> base:0xb74f3294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb6cf2294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb5b239c0 --> base:0xb74f3294
+[lxp]event_base_set [thread:(nil)] event:0xb5b25c70 --> base:0xb6cf2294
+[lxp]event_base_set [thread:0x8cc9660] event:0xb59239c0 --> base:0xb74f3294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb5b239c0 --> base:0xb6cf2294
+[lxp]event_base_set [thread:0x8cc9660] event:0xb5b25c70 --> base:0xb74f3294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb5b25c70 --> base:0xb6cf2294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb74f3294
+[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb6cf2294
+[lxp]conn_read, is udp? 0hread:0x826a338] event:0x829fc98 --> base:0xb5cbf294
+*/
 
     STATS_LOCK();
     stats.curr_conns++;
@@ -3790,6 +3806,7 @@ static enum try_read_result try_read_udp(conn *c) {
     res = recvfrom(c->sfd, c->rbuf, c->rsize,
                    0, (struct sockaddr *)&c->request_addr,
                    &c->request_addr_size);
+    fprintf(stderr, "recvfrom buf:%s \n", c->rbuf);
     if (res > 8) {
         unsigned char *buf = (unsigned char *)c->rbuf;
         pthread_mutex_lock(&c->thread->stats.mutex);
