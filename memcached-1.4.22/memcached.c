@@ -473,20 +473,23 @@ conn *conn_new(const int sfd, enum conn_states init_state,
         perror("event_add");
         return NULL;
     }
-/* -t 2 ???
-[lxp]event_base_set [thread:(nil)] event:0xb59239c0 --> base:0xb74f3294
-[lxp]event_base_set [thread:(nil)] event:0xb5b239c0 --> base:0xb6cf2294
-[lxp]event_base_set [thread:0x8cc9660] event:0xb5b239c0 --> base:0xb74f3294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb6cf2294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb5b239c0 --> base:0xb74f3294
-[lxp]event_base_set [thread:(nil)] event:0xb5b25c70 --> base:0xb6cf2294
-[lxp]event_base_set [thread:0x8cc9660] event:0xb59239c0 --> base:0xb74f3294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb5b239c0 --> base:0xb6cf2294
-[lxp]event_base_set [thread:0x8cc9660] event:0xb5b25c70 --> base:0xb74f3294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb5b25c70 --> base:0xb6cf2294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb74f3294
-[lxp]event_base_set [thread:0x8cc6338] event:0xb59239c0 --> base:0xb6cf2294
-[lxp]conn_read, is udp? 0hread:0x826a338] event:0x829fc98 --> base:0xb5cbf294
+/* ./memcached -p 11211 -t 2
+[lxp]new main_base:0x8064308
+[lxp]new thread_base:0x866433c thread:0x8664338 
+[lxp]new thread_base:0x8667664 thread:0x8667660 
+
+[lxp]event_base_set [thread:(nil)] event:0xb5c239c0 --> base:0xb7502294
+[lxp]event_base_set [thread:(nil)] event:0xb5b239c0 --> base:0xb6d01294
+[lxp]event_base_set [thread:(nil)] event:0xb5c25c60 --> base:0xb7502294
+[lxp]event_base_set [thread:0x8667660] event:0xb5b239c0 --> base:0xb6d01294
+[lxp]event_base_set [thread:0x8664338] event:0xb5c25c60 --> base:0xb6d01294
+[lxp]event_base_set [thread:(nil)] event:0xb5c27f00 --> base:0xb7502294
+[lxp]event_base_set [thread:0x8667660] event:0xb5b239c0 --> base:0xb6d01294
+[lxp]event_base_set [thread:0x8664338] event:0xb5c239c0 --> base:0xb7502294
+[lxp]event_base_set [thread:0x8667660] event:0xb5b239c0 --> base:0xb6d01294
+[lxp]event_base_set [thread:0x8664338] event:0xb5c239c0 --> base:0xb7502294
+[lxp]event_base_set [thread:0x8664338] event:0xb5c239c0 --> base:0xb6d01294
+Q: whereis the base:0xb6d01294 
 */
 
     STATS_LOCK();
@@ -5563,7 +5566,7 @@ int main (int argc, char **argv) {
 
     /* initialize main thread libevent instance */
     main_base = event_init();
-    lxp_print("event_init");
+    //lxp_print("event_init");
 
     /* initialize other stuff */
     stats_init();
@@ -5581,6 +5584,7 @@ int main (int argc, char **argv) {
     }
     /* start up worker threads if MT mode */
     memcached_thread_init(settings.num_threads, main_base);
+    fprintf(stderr, "[lxp]new main_base:%p\n", (void*)&main_base);
 
     if (start_assoc_maintenance_thread() == -1) {
         exit(EXIT_FAILURE);

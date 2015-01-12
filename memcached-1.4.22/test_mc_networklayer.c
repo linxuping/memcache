@@ -64,6 +64,7 @@ void conn_new(const int sfd, const short event, void *arg)
         fflush(stderr);
         abort();
     }
+    event_add(&accept_ev, 0); //??? ???
     //event_base_loop(accept_main_base, 0);  
     //try END.
 

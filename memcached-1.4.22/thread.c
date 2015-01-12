@@ -337,6 +337,7 @@ static void setup_thread(LIBEVENT_THREAD *me) {
     event_set(&me->notify_event, me->notify_receive_fd,
               EV_READ | EV_PERSIST, thread_libevent_process, me);
     event_base_set(me->base, &me->notify_event);
+    fprintf(stderr, "[lxp]new thread_base:%p thread:%p \n", (void*)&me->base, (void*)&me->thread_id);
 
     if (event_add(&me->notify_event, 0) == -1) {
         fprintf(stderr, "Can't monitor libevent notify pipe\n");
