@@ -12,7 +12,7 @@
 using namespace std;  
   
 struct event_base* main_base;  
-static const char MESSAGE[] ="return from libevent write!\n";  
+static const char MESSAGE[] ="libevent say hello to you !\n";  
 typedef struct{
   int index;
   int notify_recv_fd;
@@ -27,14 +27,23 @@ static int nthreads = 4;
 
 void accept_event_handler(const int fd, const short which, void *arg) {
     //? how to deal with read data ?
+    char buf[1024];
+    memset(buf, 0, 1024 );
+    size_t res; 
     if(EV_READ == which){
-        printf("accept event handler ... ... fd:%d which:%d \n", fd, which);  
+        res = read(fd, buf, 1024);
+        printf("accept event handler read... ... res:%d fd:%d which:%d buf:%s \n", res, fd, which, buf);  
+    }
+    else if(EV_WRITE == which){
+        res = read(fd, buf, 1024);
+        printf("accept event handler write... ... res:%d fd:%d which:%d buf:%s \n", res, fd, which, buf);  
     }
 }
   
 int accept_fd;
 struct event accept_ev;  
 struct event_base* accept_main_base = event_init();  
+//must let thread do this job, or not it will block... ...
 void conn_new(const int sfd, const short event, void *arg)  
 {  
     fprintf(stderr, "conn new\n");
@@ -77,8 +86,7 @@ static void *worker_libevent(void *arg)
    LIBEVENT_THREAD *me = (LIBEVENT_THREAD *)arg; 
    event_base_loop(me->base, 0);
    return NULL;
-}
-static void create_worker(void *(*func)(void *), void *arg)
+} static void create_worker(void *(*func)(void *), void *arg)
 {
   pthread_t thread;
   pthread_attr_t attr;
