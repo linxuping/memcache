@@ -4100,6 +4100,7 @@ static void drive_machine(conn *c) {
                 stats.rejected_conns++;
                 STATS_UNLOCK();
             } else {
+                fprintf(stderr, "[lxp]dispatch_conn_new drive_machine.conn_listening fd:%d \n", sfd);
                 dispatch_conn_new(sfd, conn_new_cmd, EV_READ | EV_PERSIST,
                                      DATA_BUFFER_SIZE, tcp_transport);
             }
@@ -4580,6 +4581,7 @@ static int server_socket(const char *interface,
                  * FD to each thread.
                  */
                 int per_thread_fd = c ? dup(sfd) : sfd;
+                fprintf(stderr, "[lxp]dispatch_conn_new IS_UDP fd:%d \n", per_thread_fd);
                 dispatch_conn_new(per_thread_fd, conn_read,
                                   EV_READ | EV_PERSIST,
                                   UDP_READ_BUFFER_SIZE, transport);
