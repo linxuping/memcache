@@ -9,20 +9,28 @@
 #include <fcntl.h>  
 #include <pthread.h>
 #include <unistd.h>
+#include <vector>
 using namespace std;  
   
+static int nthreads = 4;
 struct event_base* main_base;  
 static const char MESSAGE[] ="libevent say hello to you !\n";  
+typedef struct conn conn;
+struct conn{ //packet up and conn and cq_push ...
+  size_t accept_fd;
+  struct event accept_ev;  
+};
 typedef struct{
   int index;
   int notify_recv_fd;
   int notify_send_fd;
   struct event_base *base;
   struct event notify_event; 
-  //int conn_queue *new_conn_queue;
+  //int conn_queue *new_conn_queue; /* queue of new connections to handle */
+  vector<conn> new_conn_queue;
+  
 }LIBEVENT_THREAD;
 static LIBEVENT_THREAD *threads;
-static int nthreads = 4;
 
 
 void accept_event_handler(const int fd, const short which, void *arg) {
@@ -40,9 +48,11 @@ void accept_event_handler(const int fd, const short which, void *arg) {
     }
 }
   
+/*
 int accept_fd;
 struct event accept_ev;  
 struct event_base* accept_main_base = event_init();  
+*/
 //must let thread do this job, or not it will block... ...
 void conn_new(const int sfd, const short event, void *arg)  
 {  
@@ -50,8 +60,9 @@ void conn_new(const int sfd, const short event, void *arg)
     //cout<<"accept handle"<<endl;  
     struct sockaddr_in addr;  
     socklen_t addrlen = sizeof(addr);  
-    accept_fd = accept(sfd, (struct sockaddr *) &addr, &addrlen); //处理连接  
+    size_t accept_fd = accept(sfd, (struct sockaddr *) &addr, &addrlen); //处理连接  
 
+/*
     //try to using 
     //struct event accept_ev;  
     //struct event_base* accept_main_base = event_init();  
@@ -67,19 +78,26 @@ void conn_new(const int sfd, const short event, void *arg)
     event_add(&accept_ev, 0); //??? ???
     //event_base_loop(accept_main_base, 0);  
     //try END.
-
+*/
+  
 
     struct bufferevent* buf_ev;  
     buf_ev = bufferevent_new(accept_fd, NULL, NULL, NULL, NULL);  
     buf_ev->wm_read.high = 4096;  
-    //cout<<"event write"<<endl;  
     bufferevent_write(buf_ev, MESSAGE, strlen(MESSAGE));  
-    //cq_push
+
+    //cq_push -> create CQ_ITEM  
+    int index = rand()%nthreads;
+    conn con; //must be deleted
+    con.accept_fd = accept_fd; 
+    threads[index].new_conn_queue.push_back(con);
+
     char buf[1];
     buf[0] = 'c';
-    int index = rand()%nthreads;
     if (write(threads[index].notify_send_fd, buf, 1) != 1)
       printf("write pipe failed ... ... \r\n");
+    printf("write end. \n");
+    fflush(stdout);
 }  
 
 static void *worker_libevent(void *arg)
@@ -87,7 +105,9 @@ static void *worker_libevent(void *arg)
    LIBEVENT_THREAD *me = (LIBEVENT_THREAD *)arg; 
    event_base_loop(me->base, 0);
    return NULL;
-} static void create_worker(void *(*func)(void *), void *arg)
+} 
+
+static void create_worker(void *(*func)(void *), void *arg)
 {
   pthread_t thread;
   pthread_attr_t attr;
@@ -98,20 +118,34 @@ static void *worker_libevent(void *arg)
     printf("pthread create failed \r\n");
     exit(1);
   }
+  printf("thread create ... ... \n");
 }
-static void thread_libevent_proc(int fd, short int, void *arg)
+
+static void pipe_callback(int fd, short int, void *arg)
 {
   LIBEVENT_THREAD *me = (LIBEVENT_THREAD*)arg;
   char buf[1];
   memset(buf, 0, 1);
   if (read(fd, buf, 1) != 1)
   {
-    //cq_pop
     printf("read from pipe failed... \r\n");
     exit(1);
   }
+  //item = cq_pop(me->new_conn_queue); //to deal with item(CQ_ITEM)
+  if (me->new_conn_queue.size() != 0){
+    conn &con = me->new_conn_queue[0];
+    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accept_event_handler, NULL); 
+    event_base_set(me->base, &con.accept_ev);
+    if (event_add(&con.accept_ev, 0) == -1){
+      fprintf(stderr, "[lxp error]event_add failed. \n");
+      fflush(stderr);
+      abort();
+    }
+  }
+  //event_add(&accept_ev, 0); //??? ???
   printf("New client come, %c thread:%d is working. \r\n", buf[0], me->index);
 }
+
 int main()  
 {  
     cout<<"Server start !"<<endl;  
@@ -131,7 +165,7 @@ int main()
       threads[i].notify_send_fd = fds[1];
       threads[i].base = event_init();
       LIBEVENT_THREAD *me = &threads[i];
-      event_set(&me->notify_event, me->notify_recv_fd, EV_READ|EV_PERSIST, thread_libevent_proc, me);
+      event_set(&me->notify_event, me->notify_recv_fd, EV_READ|EV_PERSIST, pipe_callback, me);
       event_base_set(me->base, &me->notify_event);
       if (event_add(&me->notify_event, 0) == -1){
         printf("event_add failed \r\n");
@@ -139,14 +173,7 @@ int main()
       }
       create_worker(worker_libevent, &threads[i]); 
     }   
-/*
-    buf[0] = 'c';
-    if (write(threads[0].notify_send_fd, buf, 1) != 1)
-      printf("write pipe failed ... ... \r\n");
-    buf[0] = 's';
-    if (write(threads[2].notify_send_fd, buf, 1) != 1)
-      printf("write pipe failed ... ... \r\n");
-  */
+
     // 1. 初始化EVENT  
     main_base = event_init();  
     if(main_base)  
