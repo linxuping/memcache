@@ -32,12 +32,23 @@ typedef struct{
 }LIBEVENT_THREAD;
 static LIBEVENT_THREAD *threads;
 
+void drive_machine(conn *con){
+    /*
+    switch(con->state){
+    conn_lisening:
+        ;//cq_push item with conn_listening
+    conn_read:
+        ;//cq_pop
+    default:
+        ;
+    }*/
+}
 
 void accepted_event_handler(const int fd, const short which, void *arg) {
-    //? how to deal with read data ?
     char buf[1024];
     memset(buf, 0, 1024 );
     size_t res; 
+    //throw below if...else... to drive_machine --> 
     if(EV_READ == which){
         res = read(fd, buf, 1024);
         printf("accept event handler read... ... res:%d fd:%d which:%d buf:%s \n", res, fd, which, buf);  
@@ -110,7 +121,7 @@ static void pipe_callback(int fd, short int, void *arg)
   //item = cq_pop(me->new_conn_queue); //to deal with item(CQ_ITEM)
   if (me->new_conn_queue.size() != 0){
     conn &con = me->new_conn_queue[0];
-    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accepted_event_handler, NULL); 
+    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accepted_event_handler, &con); 
     event_base_set(me->base, &con.accept_ev);
     if (event_add(&con.accept_ev, 0) == -1){
       fprintf(stderr, "[lxp error]event_add failed. \n");
