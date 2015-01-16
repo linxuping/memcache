@@ -16,7 +16,7 @@ static int nthreads = 4;
 struct event_base* main_base;  
 static const char MESSAGE[] ="libevent say hello to you !\n";  
 typedef struct conn conn;
-struct conn{ //packet up and conn and cq_push ...
+struct conn{   //将accept到的fd，平均cq_push到各工作线程自己的CQ队列上去，通过pipe通知event_base_set到已经在loop的当前线程base上.
   size_t accept_fd;
   struct event accept_ev;  
 };
@@ -33,7 +33,7 @@ typedef struct{
 static LIBEVENT_THREAD *threads;
 
 
-void accept_event_handler(const int fd, const short which, void *arg) {
+void accepted_event_handler(const int fd, const short which, void *arg) {
     //? how to deal with read data ?
     char buf[1024];
     memset(buf, 0, 1024 );
@@ -48,11 +48,6 @@ void accept_event_handler(const int fd, const short which, void *arg) {
     }
 }
   
-/*
-int accept_fd;
-struct event accept_ev;  
-struct event_base* accept_main_base = event_init();  
-*/
 //must let thread do this job, or not it will block... ...
 void conn_new(const int sfd, const short event, void *arg)  
 {  
@@ -61,25 +56,6 @@ void conn_new(const int sfd, const short event, void *arg)
     struct sockaddr_in addr;  
     socklen_t addrlen = sizeof(addr);  
     size_t accept_fd = accept(sfd, (struct sockaddr *) &addr, &addrlen); //处理连接  
-
-/*
-    //try to using 
-    //struct event accept_ev;  
-    //struct event_base* accept_main_base = event_init();  
-    //accept_main_base = event_init();  
-    event_set(&accept_ev, accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accept_event_handler, NULL); 
-    //event_base_set(accept_main_base, &accept_ev);
-    event_base_set(main_base, &accept_ev);
-    if (event_add(&accept_ev, 0) == -1){
-        fprintf(stderr, "[lxp error]event_add failed. \n");
-        fflush(stderr);
-        abort();
-    }
-    event_add(&accept_ev, 0); //??? ???
-    //event_base_loop(accept_main_base, 0);  
-    //try END.
-*/
-  
 
     struct bufferevent* buf_ev;  
     buf_ev = bufferevent_new(accept_fd, NULL, NULL, NULL, NULL);  
@@ -103,7 +79,7 @@ void conn_new(const int sfd, const short event, void *arg)
 static void *worker_libevent(void *arg)
 {
    LIBEVENT_THREAD *me = (LIBEVENT_THREAD *)arg; 
-   event_base_loop(me->base, 0);
+   event_base_loop(me->base, 0);//event_base_set到base的ev绑定了一个event_handler作为回调
    return NULL;
 } 
 
@@ -134,7 +110,7 @@ static void pipe_callback(int fd, short int, void *arg)
   //item = cq_pop(me->new_conn_queue); //to deal with item(CQ_ITEM)
   if (me->new_conn_queue.size() != 0){
     conn &con = me->new_conn_queue[0];
-    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accept_event_handler, NULL); 
+    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accepted_event_handler, NULL); 
     event_base_set(me->base, &con.accept_ev);
     if (event_add(&con.accept_ev, 0) == -1){
       fprintf(stderr, "[lxp error]event_add failed. \n");
