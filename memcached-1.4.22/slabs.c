@@ -171,12 +171,15 @@ static void slabs_preallocate (const unsigned int maxslabs) {
 
 }
 
+//当一个slab(内存页面)用光后,又有新的item要插入这个id,那么它就会重新申请新的slab,申请新的slab时,对应id的slab链表就要增长,这个链表是成倍增长的,
+//在函数grow_slab_list函数中，这个链的长度从1变成2，从2变成4，从4变成8……
 static int grow_slab_list (const unsigned int id) {
     slabclass_t *p = &slabclass[id];
     if (p->slabs == p->list_size) {
         size_t new_size =  (p->list_size != 0) ? p->list_size * 2 : 16;
         void *new_list = realloc(p->slab_list, new_size * sizeof(void *));
         if (new_list == 0) return 0;
+        fprintf(stderr, "[lxp]slabclass_t.list_size grow to %d \n", new_size);
         p->list_size = new_size;
         p->slab_list = new_list;
     }
@@ -216,6 +219,9 @@ static int do_slabs_newslab(const unsigned int id) {
     return 1;
 }
 
+//内存单元:集合中维护的"逻辑内存块"的大小，它是以8字节对齐的
+//内存页:  slabclass_t分配内存的时候是以perslab个内存单元分配的,这perslab个连续的内存单元就是内存页
+//http://blog.sina.com.cn/s/blog_a4718065010140u9.html
 /*@null@*/
 static void *do_slabs_alloc(const size_t size, unsigned int id) {
     slabclass_t *p;
@@ -597,6 +603,7 @@ static int slab_rebalance_move(void) {
 }
 
 static void slab_rebalance_finish(void) {
+    fprintf(stderr, "[lxp]slab_rebalance_finish .\n");
     slabclass_t *s_cls;
     slabclass_t *d_cls;
 
