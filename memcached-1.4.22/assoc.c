@@ -63,6 +63,8 @@ void assoc_init(const int hashtable_init) {
     if (hashtable_init) {
         hashpower = hashtable_init;
     }
+    fprintf(stderr, "primary_hashtable size(hashsize(hashpower)): %ld hashpower:%u \n", (long unsigned int)hashsize(hashpower), hashpower);
+    fprintf(stderr, "primary_hashtable size+1: %ld hashpower:%u \n", (long unsigned int)hashsize(hashpower+1), hashpower);
     primary_hashtable = calloc(hashsize(hashpower), sizeof(void *));
     if (! primary_hashtable) {
         fprintf(stderr, "Failed to init hashtable.\n");
