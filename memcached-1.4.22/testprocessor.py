@@ -56,6 +56,10 @@ class FSite(server.Site):
 def ucweb_req_process(http_request):
   pass
 
+def start_state_agent():
+  #do sth.
+  reactor.callLater(int(config.state_agent_interval), start_state_agent)
+
 from twisted.internet import reactor
 ucweb_service_port = [["", 8085]]
 ucweb_accept = clsUcwebServer()
@@ -63,4 +67,8 @@ ucweb_accept.set_req_func((ucweb_req_process,)) #ucweb_req_processor.put_req(ucw
 for ip, port in ucweb_service_port: #
     site = FSite(ucweb_accept, timeout=120)
     ucweb_service_port = reactor.listenTCP(port, site, interface=ip)
+reactor.callLater(int(config.state_agent_interval), start_state_agent)
+#reactor.callLater方法用于设置定时事件：
+#reactor.callLater函数包含两个必须参数，等待的秒数，和需要调用的函数
 reactor.run(installSignalHandlers=0)
+
