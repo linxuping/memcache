@@ -21,6 +21,7 @@ struct conn{   //将accept到的fd，平均cq_push到各工作线程自己的CQ�
   struct event accept_ev;  
 };
 typedef struct{
+  pthread_t threadid; //unique thread id, if it is main thread... ...
   int index;
   int notify_recv_fd;
   int notify_send_fd;
@@ -44,11 +45,15 @@ void drive_machine(conn *con){
     }*/
 }
 
+//handler: work at worker-thread.
 void accepted_event_handler(const int fd, const short which, void *arg) {
+    LIBEVENT_THREAD *me = (LIBEVENT_THREAD*)arg;
+
     char buf[1024];
     memset(buf, 0, 1024 );
     size_t res; 
     //throw below if...else... to drive_machine --> 
+    printf("->handler thread_id:%lu \n", pthread_self());
     if(EV_READ == which){
         res = read(fd, buf, 1024);
         printf("accept event handler read... ... res:%d fd:%d which:%d buf:%s \n", res, fd, which, buf);  
@@ -57,6 +62,7 @@ void accepted_event_handler(const int fd, const short which, void *arg) {
         res = read(fd, buf, 1024);
         printf("accept event handler write... ... res:%d fd:%d which:%d buf:%s \n", res, fd, which, buf);  
     }
+    //while(true){} //make sure that hanler process in block way.
 }
   
 //must let thread do this job, or not it will block... ...
@@ -105,7 +111,9 @@ static void create_worker(void *(*func)(void *), void *arg)
     printf("pthread create failed \r\n");
     exit(1);
   }
-  printf("thread create ... ... \n");
+  //LIBEVENT_THREAD *me = (LIBEVENT_THREAD *)arg; 
+  //me->threadid = thread.thread_id;
+  printf("thread create thread_id:%lu ... ... \n",thread);
 }
 
 static void pipe_callback(int fd, short int, void *arg)
@@ -121,7 +129,7 @@ static void pipe_callback(int fd, short int, void *arg)
   //item = cq_pop(me->new_conn_queue); //to deal with item(CQ_ITEM)
   if (me->new_conn_queue.size() != 0){
     conn &con = me->new_conn_queue[0];
-    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accepted_event_handler, &con); 
+    event_set(&con.accept_ev, con.accept_fd, EV_READ|EV_WRITE|EV_PERSIST, accepted_event_handler, me); 
     event_base_set(me->base, &con.accept_ev);
     if (event_add(&con.accept_ev, 0) == -1){
       fprintf(stderr, "[lxp error]event_add failed. \n");
@@ -164,7 +172,7 @@ int main()
     // 1. 初始化EVENT  
     main_base = event_init();  
     if(main_base)  
-        cout<<"init event ok!"<<endl;  
+        printf("init event ok! main thread_id:%lu \n",pthread_self());
   
     // 2. 初始化SOCKET  
     int sListen;  
