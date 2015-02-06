@@ -65,6 +65,7 @@ int daemonize(int nochdir, int noclose)
     }
 
     if (noclose == 0 && (fd = open("/dev/null", O_RDWR, 0)) != -1) {
+        //int dup2(int oldhandle,int newhandle);
         if(dup2(fd, STDIN_FILENO) < 0) {
             perror("dup2 stdin");
             return (-1);
